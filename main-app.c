@@ -1,16 +1,29 @@
-git submodule init
-git submodule update
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <limits.h>
+#include <curl/curl.h>
+
+#define OPT(x) _Pragma (#x)
 
 
-cd curl
-./buildconf
-./configure --disable-shared --enable-static --prefix=/tmp/curl --disable-ldap --disable-sspi --without-ssl
-make && make install
-cd ..
-gcc -g main-app.c -static $(/tmp/curl/bin/curl-config --static-libs --cflags) -ldl -o connectivity_hub
+int main(void){
+  CURL *curl;
+  CURLcode res;
 
-gcc main-lib.c -o hub_lib.so
+  curl = curl_easy_init();
 
+  if(curl == NULL)
+    return 0;
 
-cp connectivity_hub <cybellum> 
-cp hub_lib.so <cybellum> 
+  curl_easy_setopt(curl, CURLOPT_URL, "https://example.com/getAccessAttributes?id=1");
+
+  res = curl_easy_perform(curl);
+
+  if(res != CURLE_OK) {
+    fprintf(stderr, "Error: %s\n", curl_easy_strerror(res));
+    return 0;
+  }
+
+  curl_easy_cleanup(curl);
+}
